@@ -32,11 +32,16 @@ uses unix,linux;
 {$IFDEF tmUseLIBC}
 // clock_gettime в модуле linux может быть реализована через системный вызов,
 // что в общем случае медленнее, чем обращение к библиотечной функции, так как
-// системные вызовы переключаются в режим работы ядра ОС с повышением привелегий,
+// системные вызовы переключаются в режим работы ядра ОС с повышением привилегий,
 // а библиотечные функции исполняются в пользовательском пространстве текущего процесса.
 // Здесь переопределяется clock_gettime, с гарантией доступа к функции библиотеки Си.
 function clock_gettime(clock_id:clockid_t; tp:Ptimespec):cint;cdecl;external 'c' name 'clock_gettime';
 {$ENDIF}
+
+// /usr/include/time.h
+// # define CLOCK_BOOTTIME			7
+// /* Like CLOCK_REALTIME but also wakes suspended system.  */
+const CLOCK_BOOTTIME=7;
 
 var tm:array [0..MaxTimers-1] of QWord;
     useClock:boolean=true;
@@ -45,7 +50,7 @@ function GetNanoClock: QWord;
  var ts: TTimeSpec;
      tp: TTimeVal;
 begin
- if clock_gettime(CLOCK_MONOTONIC, @ts)=0 then
+ if clock_gettime(CLOCK_BOOTTIME, @ts)=0 then
   result:=QWord(ts.tv_sec) * 1000000000 + QWord(ts.tv_nsec)
  else begin
   useClock:=false;
