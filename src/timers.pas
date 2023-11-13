@@ -1,10 +1,15 @@
 {$mode objfpc}
+unit timers;
 
+// tmUseLIBC определяет использование clock_gettime библиотеки Си
+// вместо системного вызова
 {$DEFINE tmUseLIBC}
+
+// tmRangeCheck генерирует проверки корректности номера таймера
 {$DEFINE tmRangeCheck}
 
-unit timers;
 interface
+uses unix,linux;
 
 // единицы измерения времени
 type TTimerUnit=(cNano=1, cMicro=1000, cMilli=1000000);
@@ -27,21 +32,33 @@ function timerMilli(tmNumber:integer=0): QWord;
 // tmEpsilon - максимальная погрешность в процентах
 function timerAdvice(tmEpsilon:QWord=1): TTimerUnit;
 
-implementation
-uses unix,linux;
+// инлайн-функции быстрых замеров времени, без проверок на возможные ошибки;
+// возвращает результат в заявленных единицах - время,
+// прошедшее от начала загрузки системы
+function nanotime:QWord;inline;
+function microtime:QWord;inline;
+function millitime:QWord;inline;
+
+// Определения clock_gettime_c и CLOCK_BOOTTIME формально могут быть перенесены
+// из интерфейсной секции в секцию реализации модуля, но в таком случае
+// инлайн-функции быстрых замеров времени будут реализованы как обычные функции,
+// с потерями в скорости выполнения.
+
 {$IFDEF tmUseLIBC}
-// clock_gettime в модуле linux может быть реализована через системный вызов,
+// Функция clock_gettime в модуле linux реализована через системный вызов,
 // что в общем случае медленнее, чем обращение к библиотечной функции, так как
 // системные вызовы переключаются в режим работы ядра ОС с повышением привилегий,
 // а библиотечные функции исполняются в пользовательском пространстве текущего процесса.
-// Здесь переопределяется clock_gettime, с гарантией доступа к функции библиотеки Си.
-function clock_gettime(clock_id:clockid_t; tp:Ptimespec):cint;cdecl;external 'c' name 'clock_gettime';
+// Здесь определяется clock_gettime_c, с гарантией доступа к функции clock_gettime библиотеки Си.
+function clock_gettime_c(clock_id:clockid_t; tp:Ptimespec):cint;cdecl;external 'c' name 'clock_gettime';
 {$ENDIF}
 
 // /usr/include/time.h
 // # define CLOCK_BOOTTIME			7
 // /* Like CLOCK_REALTIME but also wakes suspended system.  */
 const CLOCK_BOOTTIME=7;
+
+implementation
 
 var tm:array [0..MaxTimers-1] of QWord;
     useClock:boolean=true;
@@ -50,7 +67,11 @@ function GetNanoClock: QWord;
  var ts: TTimeSpec;
      tp: TTimeVal;
 begin
+{$IFDEF tmUseLIBC}
+ if clock_gettime_c(CLOCK_BOOTTIME, @ts)=0 then
+{$ELSE}
  if clock_gettime(CLOCK_BOOTTIME, @ts)=0 then
+{$ENDIF}
   result:=QWord(ts.tv_sec) * 1000000000 + QWord(ts.tv_nsec)
  else begin
   useClock:=false;
@@ -89,6 +110,39 @@ function timerAdvice(tmEpsilon:QWord=1): TTimerUnit;
   tmEpsilon*=1000;
   if delta<tmEpsilon then exit(cMicro);
   result:=cMilli;
+ end;
+
+function nanotime:QWord;inline;
+  var ts: TTimeSpec;
+ begin
+ {$IFDEF tmUseLIBC}
+  clock_gettime_c(CLOCK_BOOTTIME, @ts);
+ {$ELSE}
+  clock_gettime(CLOCK_BOOTTIME, @ts);
+ {$ENDIF}
+  result:=QWord(ts.tv_sec) * 1000000000 + QWord(ts.tv_nsec);
+ end;
+
+function microtime:QWord;inline;
+  var ts: TTimeSpec;
+ begin
+ {$IFDEF tmUseLIBC}
+  clock_gettime_c(CLOCK_BOOTTIME, @ts);
+ {$ELSE}
+  clock_gettime(CLOCK_BOOTTIME, @ts);
+ {$ENDIF}
+  result:=QWord(ts.tv_sec) * 1000000 + QWord(ts.tv_nsec) div 1000;
+ end;
+
+function millitime:QWord;inline;
+  var ts: TTimeSpec;
+ begin
+ {$IFDEF tmUseLIBC}
+  clock_gettime_c(CLOCK_BOOTTIME, @ts);
+ {$ELSE}
+  clock_gettime(CLOCK_BOOTTIME, @ts);
+ {$ENDIF}
+  result:=QWord(ts.tv_sec) * 1000 + QWord(ts.tv_nsec) div 1000000;
  end;
 
 end.

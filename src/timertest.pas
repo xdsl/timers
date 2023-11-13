@@ -1,6 +1,9 @@
 {$mode objfpc}
+
 uses timers,sysutils;
  var adv: TTimerUnit;
+     tm:qword;
+     i:integer;
 begin
 
  adv:=timerAdvice();
@@ -24,5 +27,17 @@ begin
 
  Writeln('Замеряем в МИЛЛИсекундах на таймере номер 0 время работы всех предыдущих sleep');
  writeln(timerMilli());
+
+ Writeln('Делаем 10 последовательных замеров в наносекундах на таймере номер 0');
+ for i:=1 to 10 do begin
+    timerStart();
+    writeln(timerNano());
+ end;
+
+ Writeln('Делаем 10 последовательных замеров в наносекундах высокоскоростной функцией nanotime');
+ for i:=1 to 10 do begin
+    tm:=nanotime();
+    writeln(nanotime-tm);
+ end;
 
 end.
