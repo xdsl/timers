@@ -17,6 +17,7 @@ type TTimerUnit=(cNano=1, cMicro=1000, cMilli=1000000);
 // пользователю доступны таймеры от 0 до maxTimers-1
 const maxTimers=100;
 
+
 // старт таймера tmNumber
 procedure timerStart(tmNumber:integer=0);
 // время, прошедшее со старта таймера tmNumber в единицах tmUnit
@@ -58,6 +59,10 @@ function clock_gettime_c(clock_id:clockid_t; tp:Ptimespec):cint;cdecl;external '
 // /* Like CLOCK_REALTIME but also wakes suspended system.  */
 const CLOCK_BOOTTIME=7;
 
+// используемый счетчик времени
+
+var timerClock:clockid_t=CLOCK_MONOTONIC;
+
 implementation
 
 var tm:array [0..MaxTimers-1] of QWord;
@@ -68,9 +73,9 @@ function GetNanoClock: QWord;
      tp: TTimeVal;
 begin
 {$IFDEF tmUseLIBC}
- if clock_gettime_c(CLOCK_BOOTTIME, @ts)=0 then
+ if clock_gettime_c(timerClock, @ts)=0 then
 {$ELSE}
- if clock_gettime(CLOCK_BOOTTIME, @ts)=0 then
+ if clock_gettime(timerClock, @ts)=0 then
 {$ENDIF}
   result:=QWord(ts.tv_sec) * 1000000000 + QWord(ts.tv_nsec)
  else begin
@@ -116,9 +121,9 @@ function nanotime:QWord;inline;
   var ts: TTimeSpec;
  begin
  {$IFDEF tmUseLIBC}
-  clock_gettime_c(CLOCK_BOOTTIME, @ts);
+  clock_gettime_c(timerClock, @ts);
  {$ELSE}
-  clock_gettime(CLOCK_BOOTTIME, @ts);
+  clock_gettime(timerClock, @ts);
  {$ENDIF}
   result:=QWord(ts.tv_sec) * 1000000000 + QWord(ts.tv_nsec);
  end;
@@ -127,9 +132,9 @@ function microtime:QWord;inline;
   var ts: TTimeSpec;
  begin
  {$IFDEF tmUseLIBC}
-  clock_gettime_c(CLOCK_BOOTTIME, @ts);
+  clock_gettime_c(timerClock, @ts);
  {$ELSE}
-  clock_gettime(CLOCK_BOOTTIME, @ts);
+  clock_gettime(timerClock, @ts);
  {$ENDIF}
   result:=QWord(ts.tv_sec) * 1000000 + QWord(ts.tv_nsec) div 1000;
  end;
@@ -138,9 +143,9 @@ function millitime:QWord;inline;
   var ts: TTimeSpec;
  begin
  {$IFDEF tmUseLIBC}
-  clock_gettime_c(CLOCK_BOOTTIME, @ts);
+  clock_gettime_c(timerClock, @ts);
  {$ELSE}
-  clock_gettime(CLOCK_BOOTTIME, @ts);
+  clock_gettime(timerClock, @ts);
  {$ENDIF}
   result:=QWord(ts.tv_sec) * 1000 + QWord(ts.tv_nsec) div 1000000;
  end;
