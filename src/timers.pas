@@ -40,6 +40,11 @@ function nanotime:QWord;inline;
 function microtime:QWord;inline;
 function millitime:QWord;inline;
 
+function nanosec:QWord;inline;
+function microsec:QWord;inline;
+function millisec:QWord;inline;
+
+
 // Определения clock_gettime_c и CLOCK_BOOTTIME формально могут быть перенесены
 // из интерфейсной секции в секцию реализации модуля, но в таком случае
 // инлайн-функции быстрых замеров времени будут реализованы как обычные функции,
@@ -149,5 +154,11 @@ function millitime:QWord;inline;
  {$ENDIF}
   result:=QWord(ts.tv_sec) * 1000 + QWord(ts.tv_nsec) div 1000000;
  end;
+
+function nanosec:QWord;inline;begin result:=nanotime(); end;
+function microsec:QWord;inline;begin result:=microtime(); end;
+function millisec:QWord;inline;begin result:=millitime(); end;
+
+
 
 end.

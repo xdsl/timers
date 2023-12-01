@@ -40,4 +40,11 @@ begin
     writeln(nanotime-tm);
  end;
 
+ Writeln('Делаем 10 последовательных замеров в наносекундах высокоскоростной функцией nanosec (псевдоним nanotime)');
+ for i:=1 to 10 do begin
+    tm:=nanosec();
+    writeln(nanosec-tm);
+ end;
+
+
 end.
