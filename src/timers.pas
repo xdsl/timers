@@ -17,7 +17,6 @@ type TTimerUnit=(cNano=1, cMicro=1000, cMilli=1000000);
 // пользователю доступны таймеры от 0 до maxTimers-1
 const maxTimers=100;
 
-
 // старт таймера tmNumber
 procedure timerStart(tmNumber:integer=0);
 // время, прошедшее со старта таймера tmNumber в единицах tmUnit
@@ -34,16 +33,14 @@ function timerMilli(tmNumber:integer=0): QWord;
 function timerAdvice(tmEpsilon:QWord=1): TTimerUnit;
 
 // инлайн-функции быстрых замеров времени, без проверок на возможные ошибки;
-// возвращает результат в заявленных единицах - время,
-// прошедшее от начала загрузки системы
+// возвращает результат в заявленных единицах - время, определяемое счетчиком timerClock
 function nanotime:QWord;inline;
 function microtime:QWord;inline;
 function millitime:QWord;inline;
-
+// инлайн-функции - псевдонимы для nanotime, microtime и millitime
 function nanosec:QWord;inline;
 function microsec:QWord;inline;
 function millisec:QWord;inline;
-
 
 // Определения clock_gettime_c и CLOCK_BOOTTIME формально могут быть перенесены
 // из интерфейсной секции в секцию реализации модуля, но в таком случае
@@ -65,7 +62,6 @@ function clock_gettime_c(clock_id:clockid_t; tp:Ptimespec):cint;cdecl;external '
 const CLOCK_BOOTTIME=7;
 
 // используемый счетчик времени
-
 var timerClock:clockid_t=CLOCK_MONOTONIC;
 
 implementation
@@ -158,7 +154,5 @@ function millitime:QWord;inline;
 function nanosec:QWord;inline;begin result:=nanotime(); end;
 function microsec:QWord;inline;begin result:=microtime(); end;
 function millisec:QWord;inline;begin result:=millitime(); end;
-
-
 
 end.
