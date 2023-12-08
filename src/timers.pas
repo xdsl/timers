@@ -113,8 +113,8 @@ function timerAdvice(tmEpsilon:QWord=1): TTimerUnit;
   delta:=GetNanoClock()-delta;
   tmEpsilon*=10;
   if useClock and (delta<tmEpsilon) then exit(cNano);
-  tmEpsilon*=1000;
-  if delta<tmEpsilon then exit(cMicro);
+  tmEpsilon*=100;
+   if delta<tmEpsilon then exit(cMicro);
   result:=cMilli;
  end;
 
